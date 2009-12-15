@@ -43,12 +43,12 @@ sub delimited {
     die "The escape character needs to be a single character"
          unless length ($_) <= 1;
 
-    $_ = quotemeta $_ for $esc, $open, $close;
+    $esc = quotemeta $esc;
 
     my @pats;
     for (my $i = 0; $i < length $open; $i ++) {
-        my $o = substr $open,  $i, 1;
-        my $c = substr $close, $i, 1;
+        my $o  = quotemeta substr $open,  $i, 1;
+        my $c  = quotemeta substr $close, $i, 1;
 
         my $body;
         if (length $esc) {
@@ -58,8 +58,9 @@ sub delimited {
             $body = "[^$c]*";
         }
 
-        push @pats =>      "(?k<string>:(?k<open_delimiter>:$o)" .
-                      "(?k<body>:$body)(?k<close_delimiter>:$c)";
+        push @pats => "(?k<open_delimiter>:$o)" .
+                      "(?k<body>:$body)"        .
+                      "(?k<close_delimiter>:$c)";
     }
 
     local $" = "|";
