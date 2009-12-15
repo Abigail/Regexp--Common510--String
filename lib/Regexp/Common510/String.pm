@@ -7,6 +7,59 @@ no  warnings 'syntax';
 
 our $VERSION = '2009121501';
 
+use Regexp::Common510;
+
+pattern String   =>  'quoted',
+        -config  => {-delim => ['"', '"'],
+                     -esc   => '\\'},
+        -pattern => \&delimited;
+
+
+sub delimited {
+    my  %arg = @_;
+    my  $esc = $arg {-esc} // "";
+    my ($open, $close);
+
+    if (@{$arg {-delim}} >= 2) {
+        ($open, $close) = @{$arg {-delim}};
+    }
+    else {
+        $close = $open = $arg {-delim} [0];
+        $close =~ tr !({[<!)}]>!;
+    }
+
+    #
+    # Sanity checks.
+    #
+    die "Delimiters need to be at least one character"
+         if grep {!defined ($_) || length ($_) < 1} $open, $close;
+    die "You need as many open as close delimiter"
+         unless length ($open) == length ($close);
+    die "The escape character needs to be a single character"
+         unless length ($_) <= 1;
+
+    $_ = quotemeta $_ for $esc, $open, $close;
+
+    my @pats;
+    for (my $i = 0; $i < length $open; $i ++) {
+        my $o = substr $open,  $i, 1;
+        my $c = substr $close, $i, 1;
+
+        my $body;
+        if (length $esc) {
+            $body = "[^$c$esc]*(?:$esc(?s:.)[^$c$esc]*)*";
+        }
+        else {
+            $body = "[^$c]*";
+        }
+
+        push @pats =>      "(?k<string>:(?k<open_delimiter>:$o)" .
+                      "(?k<body>:$body)(?k<close_delimiter>:$c)";
+    }
+
+    local $" = "|";
+    "(?k<string>:(?|@pats))";
+}
 
 1;
 
