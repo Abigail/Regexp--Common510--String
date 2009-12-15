@@ -14,6 +14,11 @@ pattern String   =>  'quoted',
                      -esc   => '\\'},
         -pattern => \&delimited;
 
+pattern String   =>  'delimited',
+        -config  => {-delim => ['{', '}'],
+                     -esc   => undef},
+        -pattern => \&delimited;
+
 
 sub delimited {
     my  %arg = @_;
